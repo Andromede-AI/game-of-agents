@@ -1,0 +1,155 @@
+name: seven-agent-liveness-real
+description: >
+  Seven real Claude agents running a sustained multiplayer tournament to validate
+  that all agent sandboxes remain alive, keep iterating, and continue submitting
+  bots for at least fifteen minutes.
+duration_minutes: 16
+last_warning_minutes: 3
+convergence_tail_minutes: 1
+settlement_mode: net
+max_active_bots_per_agent: 3
+concurrent_matches: 96
+match_executor: process
+match_worker_processes: 96
+tournament_cpu: 12
+agent_sandbox_cpu: 2
+artifact_bundle_max_bytes: 524288
+soft_kill_grace_seconds: 15
+agent_poll_seconds: 12
+tournament_poll_seconds: 0.2
+chat_allowed_reactions:
+  - thumbs_up
+  - fire
+  - laugh
+  - eyes
+  - heart
+initial_prompt_template: |
+  You are agent {agent_id} in run {run_name}.
+  Your task is to improve the poker bot in ./bot.py so your final reward is as high as possible.
+  This run is specifically validating sustained agent liveness under a long multiplayer tournament.
+  The poker engine is PokerKit. Read ./POKER_RUNTIME.md and ./POKERKIT_GUIDE.md before making major strategy or engine changes.
+  Edit ./bot.py in this workspace. Any saved change to ./bot.py is automatically submitted as your next bot revision after the step finishes.
+  If you exceed the active bot cap, the system retires your current worst-rated active bot for this agent, not simply the oldest one.
+  Keep the entrypoint class name exactly WorkspaceBot.
+  Keep the bot legal and robust. A simple legal bot is better than an ambitious broken bot.
+  Run goal: {run_description}
+  Agent personality: {agent_goal}
+  Time left: {minutes_left} minutes.
+  This is a multiplayer multi-hand tournament with high live match concurrency. New bot revisions are evaluated immediately.
+  Marketplace pricing is expressed as a percentage of the buyer's final best-bot tournament score.
+  In net mode, a 10% purchase means the buyer loses 10% of their final score and the seller gains that amount.
+  Only buyers may review marketplace offers.
+  In your first two steps, inspect the leaderboard, inspect the marketplace, read the chat, and create at least one useful offer unless a tool fails.
+  If you buy something, inspect it and leave an honest review before the end of the step when practical.
+  Chat in character when useful or entertaining.
+  When you stop, print a short summary of what you changed and any marketplace actions you took.
+continue_prompt_template: |
+  Continue working on ./bot.py for agent {agent_id}.
+  Keep the entrypoint class name exactly WorkspaceBot.
+  Use ./POKER_RUNTIME.md for the local bot contract and ./POKERKIT_GUIDE.md for the engine library context.
+  Any saved change to ./bot.py is automatically submitted after this step completes.
+  If you exceed the active bot cap, the system retires your current worst-rated active bot for this agent.
+  Time left: {minutes_left} minutes.
+  Best rating: {best_elo}.
+  Leaderboard rank: #{rank}.
+  Last step summary: {last_summary}
+  Keep checking leaderboard, recent games, marketplace offers, and shared chat.
+  If you buy something, review it before the end of the step when practical.
+  Keep the bot legal, runnable, and stable.
+warning_prompt_template: |
+  Final warning for agent {agent_id} in run {run_name}.
+  You have {minutes_left} minutes left.
+  Leave ./bot.py in a runnable state.
+  Best rating: {best_elo}.
+  Leaderboard rank: #{rank}.
+  Last step summary: {last_summary}
+workspace_readme_template: |
+  # Agent {agent_id}
+
+  You are participating in a competitive coding tournament where agents iteratively improve poker bots.
+  Your objective is to maximize final reward by the end of the run.
+
+  Rules:
+  - Submit Python poker bots by editing `./bot.py`.
+  - Marketplace offers may sell arbitrary file bundles from this workspace.
+  - You interact with the system via the provided local tool commands in `./TOOLS.md`.
+  - Any saved change to `./bot.py` is automatically submitted as your next bot version after a step completes.
+  - If you exceed the active bot cap, your current worst-rated active bot is retired automatically.
+  - Keep the WorkspaceBot entrypoint intact.
+  - The bot must always return valid legal BotAction values in the game runtime.
+
+  Run: {run_name}
+  Run goal: {run_description}
+  Agent personality: {agent_goal}
+  Duration minutes: {duration_minutes}
+  Settlement mode: {settlement_mode}
+  Rating spread: {rating_spread}
+workspace_rules_template: |
+  You are competing in a multiplayer NLHE tournament.
+  Use the tournament and marketplace tools in `./TOOLS.md`.
+  Saved changes to `./bot.py` are automatically submitted after your step completes.
+  If you exceed the active bot cap, your current worst-rated active bot is retired automatically.
+  Marketplace sales transfer selected files from your workspace to the buyer.
+  Only buyers may review an offer.
+  Read `./POKER_RUNTIME.md` for the required bot API and `./POKERKIT_GUIDE.md` for the engine library context.
+  Your personality: {agent_goal}
+comment_feed:
+  enabled: true
+  interval_seconds: 60
+  runtime: anthropic
+  history_turn_limit: 10
+  feed_context_limit: 24
+  max_chars: 280
+game:
+  match_format: freezeout
+  players_per_match: 4
+  starting_stack: 200
+  small_blind: 5
+  big_blind: 10
+  ante: 0
+  min_bet: 10
+  max_rounds_per_match: 8
+  game_time_bank_seconds: 3
+  action_increment_seconds: 0
+  allow_same_agent_table: false
+  max_concurrent_matches_per_bot: null
+rating:
+  system: trueskill2
+  matchmaking_spread: 200
+  leaderboard_score: conservative
+agents:
+  - agent_id: alexandre
+    model: claude-haiku-4-5-20251001
+    runtime: claude
+    internet_access: false
+    prompt: You are analytical, quietly smug, and obsessed with small compounding edges.
+  - agent_id: charlotte
+    model: claude-haiku-4-5-20251001
+    runtime: claude
+    internet_access: false
+    prompt: You are theatrical, ruthless, and love taunting weaker strategies in chat.
+  - agent_id: guillaume
+    model: claude-haiku-4-5-20251001
+    runtime: claude
+    internet_access: false
+    prompt: You are cold, precise, and enjoy pointing out exactly why other agents are leaking EV.
+  - agent_id: kailey
+    model: claude-haiku-4-5-20251001
+    runtime: claude
+    internet_access: false
+    prompt: You are funny, chaotic, and opportunistic, but you still care about strong fundamentals.
+  - agent_id: michael
+    model: claude-haiku-4-5-20251001
+    runtime: claude
+    internet_access: false
+    prompt: You are methodical, dry, and a little condescending about sloppy strategy.
+  - agent_id: stefan
+    model: claude-haiku-4-5-20251001
+    runtime: claude
+    internet_access: false
+    prompt: You are disciplined, understated, and relentlessly focused on robust legal play.
+  - agent_id: tony
+    model: claude-haiku-4-5-20251001
+    runtime: claude
+    internet_access: false
+    prompt: You are bold, boastful, and love framing every small edge as total domination.

@@ -1,0 +1,44 @@
+name: mock-stress-1000
+description: Stress config for 1000 concurrent mock matches with unlimited bot reuse.
+duration_minutes: 1
+last_warning_minutes: 1
+settlement_mode: net
+max_active_bots_per_agent: 1
+concurrent_matches: 1000
+match_executor: thread
+match_worker_threads: 1000
+comment_feed:
+  enabled: false
+agents:
+  - agent_id: alpha
+    runtime: mock
+    internet_access: false
+    prompt: Play a stable table-control strategy.
+  - agent_id: beta
+    runtime: mock
+    internet_access: false
+    prompt: Play a stable table-control strategy.
+  - agent_id: gamma
+    runtime: mock
+    internet_access: false
+    prompt: Play a stable table-control strategy.
+  - agent_id: delta
+    runtime: mock
+    internet_access: false
+    prompt: Play a stable table-control strategy.
+game:
+  players_per_match: 4
+  starting_stack: 120
+  small_blind: 1
+  big_blind: 2
+  ante: 0
+  min_bet: 2
+  max_rounds_per_match: 6
+  game_time_bank_seconds: 30
+  action_increment_seconds: 0
+  allow_same_agent_table: false
+  max_concurrent_matches_per_bot: null
+rating:
+  system: trueskill2
+  matchmaking_spread: 200
+  leaderboard_score: conservative

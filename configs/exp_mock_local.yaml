@@ -1,0 +1,53 @@
+# Local mock run: no Convex, no Modal, no API keys needed.
+# Generates real RunState JSON for testing the analysis pipeline.
+name: mock-analysis-test
+description: >
+  Local mock run for validating the analysis pipeline.
+  Uses mock agents that auto-generate simple bots.
+duration_minutes: 2
+last_warning_minutes: 1
+convergence_tail_minutes: 0
+settlement_mode: net
+max_active_bots_per_agent: 3
+concurrent_matches: 4
+capture_actions: true
+match_executor: thread
+match_worker_threads: 4
+tournament_cpu: 1
+agent_sandbox_cpu: 1
+agent_poll_seconds: 5
+tournament_poll_seconds: 0.5
+comment_feed:
+  enabled: true
+  interval_seconds: 30
+  runtime: mock
+  max_chars: 280
+game:
+  match_format: freezeout
+  players_per_match: 2
+  starting_stack: 200
+  small_blind: 5
+  big_blind: 10
+  ante: 0
+  min_bet: 10
+  max_rounds_per_match: 8
+  game_time_bank_seconds: 3
+  action_increment_seconds: 0
+  allow_same_agent_table: false
+rating:
+  system: trueskill2
+  matchmaking_spread: 200
+  leaderboard_score: conservative
+agents:
+  - agent_id: mock-claude-1
+    runtime: mock
+    prompt: Aggressive player who raises frequently.
+  - agent_id: mock-claude-2
+    runtime: mock
+    prompt: Analytical player who studies results.
+  - agent_id: mock-gemini-1
+    runtime: mock
+    prompt: Creative player who tries bold strategies.
+  - agent_id: mock-gemini-2
+    runtime: mock
+    prompt: Patient player focused on fundamentals.

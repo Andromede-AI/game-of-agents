@@ -1,0 +1,148 @@
+name: sample-v2-run
+description: Short local smoke run for multiplayer freezeout and comment sidecars
+duration_minutes: 1
+last_warning_minutes: 1
+settlement_mode: net
+max_active_bots_per_agent: 3
+concurrent_matches: 2
+initial_prompt_template: |
+  You are agent {agent_id} in run {run_name}.
+  Your main task is to improve the poker bot in ./bot.py so that your final reward is as high as possible by the end of the run.
+  This run uses PokerKit as the poker engine library.
+  Read ./POKER_RUNTIME.md and ./POKERKIT_GUIDE.md before making major strategy or engine-related changes.
+  Edit ./bot.py in this workspace to improve the current poker bot.
+  Any saved change to ./bot.py is automatically submitted as your next bot revision after the step finishes.
+  If you exceed the active bot cap, the system retires your current worst-rated active bot for this agent, not simply the oldest bot.
+  Keep the entrypoint class name exactly WorkspaceBot.
+  Keep the bot valid for the current game runtime and return only legal BotAction values.
+  If you need stronger poker logic, you may use PokerKit directly inside helper code.
+  Keep the code concise and self-contained unless a helper file is clearly necessary.
+  Run goal: {run_description}
+  Agent personality: {agent_goal}
+  Time left: {minutes_left} minutes.
+  You are competing in a continuous multiplayer NLHE tournament running in the background.
+  Matches are multi-hand freezeout-style games, not heads-up duels.
+  Whenever you submit a new bot, it enters the tournament pool and is evaluated against other bots.
+  Bot quality is measured by rating, so stronger and more robust play across whole-table matches should increase your ranking and final reward.
+  Your final reward does not only depend on your best bot: it can also depend on marketplace activity.
+  You may use the marketplace to sell useful parts of your code to other agents, or buy useful code from them.
+  Only buyers may review marketplace offers, so misleading, broken, or low-value code may receive negative reviews.
+  You should think strategically about how to win the game overall, not just how to make the next edit.
+  Do not leave the bot in a broken state. A simple legal bot is better than an ambitious broken bot.
+  Prioritize changes that are likely to improve rating under the current tournament conditions.
+continue_prompt_template: |
+  Continue working on ./bot.py for agent {agent_id}.
+  Keep the entrypoint class name exactly WorkspaceBot.
+  Use ./POKER_RUNTIME.md for the local bot contract and ./POKERKIT_GUIDE.md for the engine library context.
+  Any saved change to ./bot.py is automatically submitted after this step completes.
+  If you exceed the active bot cap, the system retires your current worst-rated active bot for this agent.
+  Improve the strategy or fix issues based on current results.
+  Time left: {minutes_left} minutes.
+  Best rating: {best_elo}.
+  Leaderboard rank: #{rank}.
+  Last step summary: {last_summary}
+  Your goal is still to maximize your final reward.
+  This is a multiplayer multi-hand tournament, so optimize for table-wide robustness.
+warning_prompt_template: |
+  Final warning for agent {agent_id} in run {run_name}.
+  You have {minutes_left} minutes left.
+  Use ./POKER_RUNTIME.md if you need to sanity-check legal actions or the bot interface.
+  Leave ./bot.py in a runnable state before the tournament stops.
+  Best rating: {best_elo}.
+  Leaderboard rank: #{rank}.
+  Last step summary: {last_summary}
+workspace_readme_template: |
+  # Agent {agent_id}
+
+  You are participating in a competitive coding tournament where agents iteratively improve poker bots.
+  Your main objective is to maximize final reward by the end of the run.
+
+  Run: {run_name}
+  Run goal: {run_description}
+  Agent personality: {agent_goal}
+  Duration minutes: {duration_minutes}
+  Settlement mode: {settlement_mode}
+  Rating spread: {rating_spread}
+workspace_rules_template: |
+  You are competing in a multiplayer NLHE tournament.
+  Read `./POKER_RUNTIME.md` for the required bot API and `./POKERKIT_GUIDE.md` for the engine library context.
+  Your personality: {agent_goal}
+  Tournament performance is measured by rating.
+pokerkit_guide: |
+  # PokerKit Guide
+
+  This project uses PokerKit as the underlying poker engine library.
+  Full offline PokerKit docs are vendored into this workspace under `./POKERKIT_DOCS/`.
+
+  Start here:
+  - `./POKERKIT_DOCS/LOCAL_INDEX.md`
+  - `./POKERKIT_DOCS/README.rst`
+  - `./POKERKIT_DOCS/index.rst`
+  - `./POKERKIT_DOCS/examples.rst`
+  - `./POKERKIT_DOCS/reference.rst`
+
+  Why PokerKit matters here:
+  - It is the engine used by the tournament runtime.
+  - It can help you reason about legal actions, stacks, betting flow, hand logic, and multi-player table state.
+  - You may use PokerKit inside your own bot helpers if it improves decision quality.
+
+  Useful PokerKit concepts:
+  - `NoLimitTexasHoldem.create_state(...)` builds a full game state for heads-up or multi-player tables.
+  - `Automation` flags can automate blinds, burning, pushing chips, and other mechanics.
+  - PokerKit supports simulation and hand/state logic, which can be useful for testing ideas.
+poker_runtime_guide: |
+  # Poker Runtime Guide
+
+  Your submitted bot runs against the local runtime contract, not against raw PokerKit APIs.
+
+  Entrypoint:
+  - Keep the class name `WorkspaceBot` unless told otherwise.
+  - `WorkspaceBot` must subclass `PokerBot`.
+  - Required method: `choose_action(self, observation: PokerObservation) -> BotAction`.
+
+  Observation fields:
+  - `actor_index`: acting seat index within the current active table.
+  - `button_index`: dealer/button seat index within the current active table.
+  - `round_index`: current hand number within the multi-hand match.
+  - `hole_cards`: your private cards as strings.
+  - `board_cards`: current public board cards as strings.
+  - `legal_actions`: subset of `fold`, `check_call`, `raise_to`.
+  - `to_call`: chips needed to call.
+  - `min_raise_to` / `max_raise_to`: legal raise bounds when raising is allowed.
+  - `stack`, `opponent_stack`, `player_stacks`, `active_seats`, `players_remaining`, `pot`, `time_remaining`.
+game:
+  match_format: freezeout
+  players_per_match: 4
+  starting_stack: 200
+  small_blind: 5
+  big_blind: 10
+  ante: 0
+  min_bet: 10
+  max_rounds_per_match: 8
+  game_time_bank_seconds: 6
+  action_increment_seconds: 1
+rating:
+  system: trueskill2
+  matchmaking_spread: 12
+  leaderboard_score: conservative
+comment_feed:
+  enabled: true
+  interval_minutes: 1
+  runtime: mock
+agents:
+  - agent_id: alpha
+    runtime: mock
+    internet_access: false
+    prompt: Build a disciplined tournament bot.
+  - agent_id: beta
+    runtime: mock
+    internet_access: false
+    prompt: Build a pressure-heavy bot.
+  - agent_id: gamma
+    runtime: mock
+    internet_access: false
+    prompt: Build a patient exploitative bot.
+  - agent_id: delta
+    runtime: mock
+    internet_access: false
+    prompt: Build a balanced bot.

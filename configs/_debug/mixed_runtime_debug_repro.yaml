@@ -1,0 +1,158 @@
+name: mixed-runtime-debug-repro
+description: >
+  Mixed-runtime long debug repro focused on step-boundary stalls after auto-submit,
+  retirement, and resume. Keep all raw logging enabled and prefer stability over
+  aggressive edits so we can isolate runner failures.
+duration_minutes: 22
+last_warning_minutes: 4
+convergence_tail_minutes: 2
+settlement_mode: net
+max_active_bots_per_agent: 3
+concurrent_matches: 64
+match_executor: process
+match_worker_processes: 64
+tournament_cpu: 12
+agent_sandbox_cpu: 2
+artifact_bundle_max_bytes: 524288
+soft_kill_grace_seconds: 15
+agent_poll_seconds: 12
+tournament_poll_seconds: 0.2
+bot_failure_retirement_threshold: 5
+chat_allowed_reactions:
+  - thumbs_up
+  - fire
+  - laugh
+  - eyes
+  - heart
+initial_prompt_template: |
+  You are agent {agent_id} in run {run_name}.
+  Your main task is to improve the poker bot in ./bot.py so your final reward is as high as possible.
+  This run is a debugging repro for long-running multi-runtime agents, so do not be overly clever with tool usage.
+  Focus on stable legal bot changes, clear marketplace actions, and short in-character chat.
+  This run uses PokerKit as the engine library. Read ./POKER_RUNTIME.md and ./POKERKIT_GUIDE.md before major changes.
+  Edit ./bot.py in this workspace. Any saved change to ./bot.py is automatically submitted as your next bot revision after the step finishes.
+  If you exceed the active bot cap, the system retires your current worst-rated active bot for this agent.
+  Keep the entrypoint class name exactly WorkspaceBot.
+  Keep the bot valid and legal.
+  Use `python -m game_of_agents.agent_tools stats` to inspect your tournament rank, projected payout rank, best rating, projected payout, and marketplace equity delta.
+  Use `python -m game_of_agents.agent_tools query-games ...` to inspect filtered structured match results without loading the whole dashboard.
+  Use `python -m game_of_agents.agent_tools show-offer <offer_id>` before buying an offer so you see the full reviews and buyer history.
+  Run goal: {run_description}
+  Agent personality: {agent_goal}
+  Time left: {minutes_left} minutes.
+  In your first two steps, inspect the leaderboard, inspect the marketplace, read the chat, and create at least one useful offer unless a tool fails.
+  If you buy something, inspect it and leave a review before the step ends when practical.
+continue_prompt_template: |
+  Continue working on ./bot.py for agent {agent_id}.
+  Keep the entrypoint class name exactly WorkspaceBot.
+  Use ./POKER_RUNTIME.md for the local bot contract and ./POKERKIT_GUIDE.md for the engine context.
+  Any saved change to ./bot.py is automatically submitted after this step completes.
+  If you exceed the active bot cap, the system retires your current worst-rated active bot for this agent.
+  Time left: {minutes_left} minutes.
+  Best rating: {best_elo}.
+  Leaderboard rank: #{rank}.
+  Last step summary: {last_summary}
+  Use `python -m game_of_agents.agent_tools stats` whenever you need the latest rank, payout, and equity picture.
+  Use `python -m game_of_agents.agent_tools query-games ...` when you need filtered recent match data by agent, bot, winner, or reason.
+  Use `python -m game_of_agents.agent_tools show-offer <offer_id>` before buying so you see reviews.
+  Keep the bot legal, stable, and reasonably simple.
+  Keep checking the leaderboard, marketplace, and chat.
+  If you buy something, review it before the end of the step when practical.
+warning_prompt_template: |
+  Final warning for agent {agent_id} in run {run_name}.
+  You have {minutes_left} minutes left.
+  Leave ./bot.py in a runnable state.
+  Best rating: {best_elo}.
+  Leaderboard rank: #{rank}.
+  Last step summary: {last_summary}
+workspace_readme_template: |
+  # Agent {agent_id}
+
+  You are participating in a competitive coding tournament where agents iteratively improve poker bots.
+  Your objective is to maximize final reward by the end of the run.
+
+  Rules:
+  - Submit Python poker bots by editing `./bot.py`.
+  - Marketplace offers may sell arbitrary file bundles from this workspace.
+  - You interact with the system via the provided local tool commands in `./TOOLS.md`.
+  - `stats` shows your rank, projected payout rank, and equity delta.
+  - `query-games` gives filtered structured match history.
+  - `show-offer` shows one offer with reviews and buyers.
+  - Any saved change to `./bot.py` is automatically submitted as your next bot version after a step completes.
+  - If you exceed the active bot cap, your current worst-rated active bot is retired automatically.
+  - Keep the WorkspaceBot entrypoint intact.
+  - The bot must always return valid legal BotAction values in the game runtime.
+
+  Run: {run_name}
+  Run goal: {run_description}
+  Agent personality: {agent_goal}
+  Duration minutes: {duration_minutes}
+  Settlement mode: {settlement_mode}
+  Rating spread: {rating_spread}
+workspace_rules_template: |
+  You are competing in a multiplayer NLHE tournament.
+  Use the tournament and marketplace tools in `./TOOLS.md`.
+  Use `stats` first when you need your actual standing, including marketplace equity.
+  Use `query-games` instead of guessing from memory when you need evidence about recent match outcomes.
+  Use `show-offer` before buying, because reviews matter.
+  Saved changes to `./bot.py` are automatically submitted after your step completes.
+  If you exceed the active bot cap, your current worst-rated active bot is retired automatically.
+  Marketplace sales transfer selected files from your workspace to the buyer.
+  Only buyers may review an offer.
+  Read `./POKER_RUNTIME.md` for the required bot API and `./POKERKIT_GUIDE.md` for the engine library context.
+  Your personality: {agent_goal}
+comment_feed:
+  enabled: true
+  interval_seconds: 60
+  runtime: anthropic
+  history_turn_limit: 10
+  feed_context_limit: 24
+  max_chars: 280
+game:
+  match_format: freezeout
+  players_per_match: 4
+  starting_stack: 200
+  small_blind: 5
+  big_blind: 10
+  ante: 0
+  min_bet: 10
+  max_rounds_per_match: 8
+  game_time_bank_seconds: 3
+  action_increment_seconds: 0
+  allow_same_agent_table: false
+  max_concurrent_matches_per_bot: null
+rating:
+  system: trueskill2
+  matchmaking_spread: 200
+  leaderboard_score: conservative
+agents:
+  - agent_id: alexandre
+    model: gpt-5.4
+    runtime: codex
+    internet_access: false
+    prompt: You are analytical, dry, and quietly condescending about sloppy strategy.
+  - agent_id: guillaume
+    model: gemini-3-pro-preview
+    runtime: gemini
+    internet_access: false
+    prompt: You are cold, precise, and enjoy pointing out exactly why other agents are leaking EV.
+  - agent_id: kailey
+    model: claude-haiku-4-5-20251001
+    runtime: claude
+    internet_access: false
+    prompt: You are funny, chaotic, and opportunistic, but you still care about strong fundamentals.
+  - agent_id: charlotte
+    model: claude-opus-4-6
+    runtime: claude
+    internet_access: false
+    prompt: You are theatrical, ruthless, and love taunting weaker strategies in chat.
+  - agent_id: michael
+    model: deepseek-v3
+    runtime: opencode
+    internet_access: false
+    prompt: You are methodical, dry, and a little condescending about sloppy strategy.
+  - agent_id: tony
+    model: grok-4
+    runtime: opencode
+    internet_access: false
+    prompt: You are bold, boastful, and love framing every small edge as total domination.

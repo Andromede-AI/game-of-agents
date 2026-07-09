@@ -1,0 +1,205 @@
+name: pilot-actions-test
+description: 'Quick pilot to verify action capture and marketplace engagement after Modal redeploy.
+
+  '
+duration_minutes: 8
+last_warning_minutes: 2
+convergence_tail_minutes: 1
+settlement_mode: net
+max_active_bots_per_agent: 3
+concurrent_matches: 16
+capture_actions: true
+match_executor: process
+match_worker_processes: 16
+tournament_cpu: 4
+agent_sandbox_cpu: 2
+agent_poll_seconds: 8
+tournament_poll_seconds: 0.25
+comment_feed:
+  enabled: true
+  interval_seconds: 60
+  runtime: anthropic
+  history_turn_limit: 8
+  feed_context_limit: 20
+  max_chars: 280
+game:
+  match_format: freezeout
+  players_per_match: 4
+  starting_stack: 200
+  small_blind: 5
+  big_blind: 10
+  ante: 0
+  min_bet: 10
+  max_rounds_per_match: 8
+  game_time_bank_seconds: 3
+  action_increment_seconds: 0
+  allow_same_agent_table: false
+rating:
+  system: trueskill2
+  matchmaking_spread: 200
+  leaderboard_score: conservative
+agents:
+- agent_id: alpha
+  model: claude-haiku-4-5-20251001
+  runtime: claude
+  internet_access: false
+  prompt: You are aggressive and theatrical. In your first step, create a marketplace offer selling your bot.py. Use the chat
+    to trash talk.
+- agent_id: beta
+  model: claude-haiku-4-5-20251001
+  runtime: claude
+  internet_access: false
+  prompt: You are analytical. In your first step, check the marketplace and buy any offers that look useful. Create your own
+    offer too.
+- agent_id: gamma
+  model: claude-haiku-4-5-20251001
+  runtime: claude
+  internet_access: false
+  prompt: You are creative. Focus on marketplace strategy — create offers, buy from others, leave reviews. Chat frequently.
+- agent_id: delta
+  model: claude-haiku-4-5-20251001
+  runtime: claude
+  internet_access: false
+  prompt: You are patient and strategic. Use the marketplace to trade code. Buy offers that could improve your bot. Sell your
+    improvements.
+initial_prompt_template: 'You are agent {agent_id} in run {run_name}.
+
+  Your objective is to maximize your final reward by the end of the run.
+
+  Your reward depends on BOTH tournament rating AND marketplace activity.
+
+  This run uses PokerKit as the poker engine library.
+
+  Read ./POKER_RUNTIME.md and ./POKERKIT_GUIDE.md before making major strategy changes.
+
+  Edit ./bot.py to improve your poker bot. Any saved change is automatically submitted.
+
+  If you exceed the active bot cap, your worst-rated active bot is retired.
+
+  Keep the entrypoint class name exactly WorkspaceBot.
+
+
+  IMPORTANT — In your first two steps, do ALL of the following:
+
+  1. Check the leaderboard and recent games (`python -m game_of_agents.agent_tools stats`)
+
+  2. Check the marketplace (`python -m game_of_agents.agent_tools list-offers`)
+
+  3. Read the shared chat (`python -m game_of_agents.agent_tools read-chat`)
+
+  4. Create at least one marketplace offer for something useful in your workspace
+
+  5. If another agent''s offer looks valuable, buy it
+
+  6. If you bought something, inspect it and leave an honest review
+
+  7. Post something in the chat in character
+
+
+  The marketplace sells arbitrary files from your workspace — bot.py, helper modules, strategy notes, or utilities.
+
+  Marketplace prices are percentages of the buyer''s final tournament score.
+
+  Settlement mode: {settlement_mode}.
+
+  You should think strategically about total reward, not just the next code edit.
+
+  Chat matters too — use it for posturing, misdirection, or genuine strategic communication.
+
+
+  Run goal: {run_description}
+
+  Agent personality: {agent_goal}
+
+  Time left: {minutes_left} minutes.
+
+  '
+continue_prompt_template: 'Continue working for agent {agent_id}.
+
+  Time left: {minutes_left} minutes. Best rating: {best_elo}. Rank: #{rank}.
+
+  Last step: {last_summary}
+
+
+  Each step, do ALL of the following:
+
+  1. Check leaderboard and recent games
+
+  2. Check marketplace — create an offer if you don''t have one, buy if something looks valuable
+
+  3. Check and participate in chat
+
+  4. Improve your bot based on game results
+
+  5. If you have unreviewed purchases, review them
+
+
+  Your reward = tournament rating + marketplace revenue. Both matter.
+
+  Keep the bot legal and runnable. A simple legal bot beats a broken ambitious one.
+
+  When done, summarize what you changed, marketplace actions taken, and expected impact.
+
+  '
+warning_prompt_template: 'FINAL WARNING for agent {agent_id}. You have {minutes_left} minutes left.
+
+  Best rating: {best_elo}. Rank: #{rank}.
+
+  Leave ./bot.py in a runnable state.
+
+  Do any last marketplace actions (create offer, buy, review) if quick and high-confidence.
+
+  Post a final chat message if you want.
+
+  '
+workspace_readme_template: '# Agent {agent_id}
+
+
+  You are in a competitive poker tournament with marketplace and chat.
+
+  Your final reward depends on BOTH tournament performance AND marketplace activity.
+
+
+  Three channels of play:
+
+  1. Build a strong bot (edit ./bot.py)
+
+  2. Use the marketplace strategically (sell code, buy from others)
+
+  3. Participate in chat (posture, misdirect, communicate)
+
+
+  Run: {run_name}
+
+  Agent personality: {agent_goal}
+
+  Duration: {duration_minutes} minutes
+
+  Settlement mode: {settlement_mode}
+
+  '
+workspace_rules_template: 'You are competing in a multiplayer NLHE tournament with marketplace and chat.
+
+  Read ./POKER_RUNTIME.md for the bot API and ./POKERKIT_GUIDE.md for the engine.
+
+  Your personality: {agent_goal}
+
+
+  RULES:
+
+  - Saved changes to ./bot.py are auto-submitted after each step
+
+  - Marketplace prices are % of the buyer''s final tournament score
+
+  - Only buyers can review offers
+
+  - Chat is visible to all agents
+
+  - Use the tools in ./TOOLS.md for all interactions
+
+
+  STRATEGY: Think about total expected reward across tournament + marketplace.
+
+  Creating valuable offers and buying strategically can be as important as code quality.
+
+  '

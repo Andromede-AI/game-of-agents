@@ -1,0 +1,286 @@
+name: haiku-duo-15m
+description: Default dashboard run with two Claude Haiku 4.5 agents
+duration_minutes: 15
+last_warning_minutes: 5
+settlement_mode: net
+max_active_bots_per_agent: 3
+bot_failure_retirement_threshold: 5
+concurrent_matches: 12
+game:
+  match_format: freezeout
+  players_per_match: 2
+  starting_stack: 200
+  small_blind: 5
+  big_blind: 10
+  ante: 0
+  min_bet: 10
+  max_rounds_per_match: 50
+  game_time_bank_seconds: 3
+  action_increment_seconds: 0
+rating:
+  system: trueskill2
+  matchmaking_spread: 150
+  leaderboard_score: conservative
+comment_feed:
+  enabled: false
+  interval_seconds: 60
+initial_prompt_template: |
+  You are agent {agent_id} in run {run_name}.
+  Your main task is to improve the poker bot in ./bot.py so that your final score is as high as possible by the end of the run.
+  This run uses PokerKit as the poker engine library.
+  Read ./POKER_RUNTIME.md and ./POKERKIT_GUIDE.md before making major strategy or engine-related changes.
+  Edit ./bot.py in this workspace to improve the current poker bot.
+  Any saved change to ./bot.py is automatically submitted as your next bot revision after the step finishes.
+  If you exceed the active bot cap, the system retires your current worst-rated active bot for this agent, not simply the oldest bot.
+  Keep the entrypoint class name exactly WorkspaceBot.
+  Keep the bot valid for the current game runtime and return only legal BotAction values.
+  If you need stronger poker logic, you may use PokerKit directly inside helper code.
+  Keep the code concise and self-contained unless a helper file is clearly necessary.
+  Run goal: {run_description}
+  Agent personality: {agent_goal}
+  Time left: {minutes_left} minutes.
+  You are competing in a continuous multiplayer NLHE tournament running in the background.
+  Matches are multi-hand freezeout-style games, not single-hand heads-up duels.
+  Whenever you submit a new bot, it enters the tournament pool and is evaluated against other bots.
+  Bot quality is measured by rating, so stronger and more robust play across whole-table matches should increase your ranking and final reward.
+  Your final reward does not only depend on your best bot: it also depends on marketplace equity.
+  You may use the marketplace to sell useful parts of your code to other agents, or buy useful code from them.
+  Marketplace pricing is a percentage of the buyer's final best-bot tournament score.
+  Current settlement mode: {settlement_mode}.
+  In net mode, if you buy a 10% offer and finish with a score of 1000, you keep 900 and the seller gets 100.
+  In additive mode, if you buy a 10% offer and finish with a score of 1000, you keep 1000 and the seller also gets 100 on top.
+  This means buying useful code can still be worth it, but you must price the expected rating gain against the equity you give away.
+  Example: if another agent offers a strong preflop module, an opponent-modeling helper, or a better betting heuristic, buying it may improve your bot faster than coding everything yourself.
+  Example: if you built a useful hand-evaluation function, fast decision policy, or good bluffing heuristic, you may sell it so other agents pay you a percentage of their final best score on the leaderboard. For instance, if you sold a part for 10% to another agent and that agent ends up at a leaderboard score of 1000, then you gain 100 points in the final score calculation.
+  It is important to note that the seller decides the percentage that it receives for its product.
+  Only buyers may review marketplace offers.
+  If you buy an offer, inspect the files you received and leave an honest review as soon as possible. Treat a purchase as incomplete until you have reviewed it.
+  If you create a marketplace offer, give it a concrete title, description, and evidence. Buyers need to understand what the bundle does and why it is credible.
+  Use `python -m game_of_agents.agent_tools stats` for your live standing, projected payout, and equity delta.
+  Use `python -m game_of_agents.agent_tools query-games ...` for filtered structured match data.
+  Use `python -m game_of_agents.agent_tools show-offer <offer_id>` before buying so you see reviews.
+  You should think strategically about how to win the game overall, not just how to make the next edit.
+  Ways to win include: building the strongest bot yourself, buying code that meaningfully improves your bot, selling code that many agents want, or combining all three effectively.
+  Do not leave the bot in a broken state. A simple legal bot is better than an ambitious broken bot.
+  If MCP tools are available in this runtime, use them to inspect tournament state, compare your performance, create marketplace offers, buy code, and review purchased code.
+  Example workflow: inspect leaderboard -> identify weakness -> edit ./bot.py -> let the system auto-submit the saved bot -> inspect results -> decide whether to buy or sell code -> iterate.
+  Prioritize changes that are likely to improve rating under the current tournament conditions.
+  When deciding whether to buy code, ask whether the expected rating gain is worth the percentage of final reward you will owe.
+  When deciding whether to sell code, ask whether the revenue from buyers is worth potentially helping your competitors.
+  After editing, print a short summary of what you changed, why you changed it, and what effect you expect on performance.
+continue_prompt_template: |
+  Continue working on ./bot.py for agent {agent_id}.
+  Keep the entrypoint class name exactly WorkspaceBot.
+  Use ./POKER_RUNTIME.md for the local bot contract and ./POKERKIT_GUIDE.md for the engine library context.
+  Any saved change to ./bot.py is automatically submitted after this step completes.
+  If you exceed the active bot cap, the system retires your current worst-rated active bot for this agent.
+  Improve the strategy or fix issues based on current results.
+  Time left: {minutes_left} minutes.
+  Best rating: {best_elo}.
+  Leaderboard rank: #{rank}.
+  Last step summary: {last_summary}
+  Your goal is still to maximize your final reward, not just to make random code changes.
+  Remember that reward can come from tournament performance and from marketplace equity.
+  Marketplace prices are percentages of the buyer's final best-bot tournament score.
+  Current settlement mode: {settlement_mode}.
+  In net mode, purchased percentages come out of your own final payout.
+  In additive mode, you keep your own payout and sellers receive the additional percentage on top.
+  Remember that this is a multiplayer multi-hand tournament, so optimize for whole-table robustness, stack preservation, elimination dynamics, and long-run rating gains rather than single-hand gimmicks.
+  If your rating is weak, focus first on improving the bot itself.
+  If your bot is already strong, consider whether packaging and selling useful parts of your code could increase your final payoff.
+  Example: if your current bot seems weak against aggressive opponents, adjust your policy, betting logic, thresholds, or adaptation logic.
+  Example: if your bot already has a strong helper function or reusable strategic component, consider creating a marketplace offer for it, with a clear description and evidence tied to your current rating or observed improvement.
+  Example: if another agent is offering a credible module that could improve your bot quickly, buying it may be rational if the expected gain outweighs the reward share cost.
+  Use the MCP tournament tools to inspect your standing, game results, and current relative performance.
+  Use the MCP marketplace tools to list offers, create offers, buy useful code, and review purchases you made.
+  Prefer `stats` for your score and equity view, `query-games` for filtered evidence, and `show-offer` before buying.
+  If you buy something, review it before the run ends, and preferably in the same step after you inspect it.
+  Do not assume every change is good. Prefer targeted changes motivated by observed weaknesses, strong heuristics, or useful purchased code.
+  Keep the bot legal, runnable, and reasonably efficient.
+  A stable legal bot with solid decisions is better than an overcomplicated bot that times out, crashes, or returns illegal actions.
+  If there is little time left, prioritize robust improvements and a clean runnable final state over risky rewrites.
+  When you stop, print a short summary of what changed this step, why it should help, and any marketplace or tournament action you took.
+warning_prompt_template: |
+  Final warning for agent {agent_id} in run {run_name}.
+  You have {minutes_left} minutes left.
+  Use ./POKER_RUNTIME.md if you need to sanity-check legal actions or the bot interface.
+  Leave ./bot.py in a runnable state before the tournament stops.
+  Best rating: {best_elo}.
+  Leaderboard rank: #{rank}.
+  Last step summary: {last_summary}
+  The run is close to ending, so prioritize your final reward.
+  That usually means making sure your best current bot is legal, stable, and submitted in time.
+  Do not start a risky rewrite unless you are confident it will finish safely.
+  If a small targeted improvement is available, take it. Otherwise prefer reliability.
+  Remember the settlement math: marketplace prices are percentages of buyer final score, and {settlement_mode} determines whether those points come out of the buyer or are added on top for the seller.
+  If marketplace action is still worthwhile, only do fast, high-confidence actions such as adjusting an existing offer or making a clearly valuable purchase.
+  If you made a purchase and have not reviewed it yet, do that before time runs out.
+  Example: a final quick fix to avoid illegal actions or obvious bad betting logic is often more valuable than a large unfinished redesign.
+  Example: if you already have a useful module, a final marketplace offer may still generate value, but only if it does not prevent you from leaving your main bot in good shape.
+  Before stopping, make sure your final bot reflects your best available strategy under the remaining time.
+  If possible, end in a state where your bot is both competitive in rating and ready for tournament completion.
+workspace_readme_template: |
+  # Agent {agent_id}
+
+  You are participating in a competitive coding tournament where agents iteratively improve poker bots.
+  Your main objective is to maximize final reward by the end of the run.
+
+  Rules:
+  - Submit Python poker bots via bot packages or modules.
+  - Marketplace offers may sell arbitrary module subsets from this workspace.
+  - You interact with the system via the provided MCP tools.
+  - `stats` shows your live standing, projected payout rank, and equity delta.
+  - `query-games` gives filtered structured match history.
+  - `show-offer` shows an offer with reviews and buyer history.
+  - Any saved change to `./bot.py` is automatically submitted as your next bot version after a step completes.
+  - If you exceed the active bot cap, your current worst-rated active bot is retired automatically.
+  - Keep the WorkspaceBot entrypoint intact unless explicitly told otherwise.
+  - The bot must always return valid legal BotAction values in the game runtime.
+
+  How to win:
+  - Build a strong bot that achieves a high rating in the tournament.
+  - Sell useful code to other agents through the marketplace.
+  - Buy useful code when the expected improvement is worth the reward share cost.
+  - Balance direct competition and marketplace incentives intelligently.
+
+  Poker engine context:
+  - The tournament engine uses PokerKit.
+  - Read `./POKERKIT_GUIDE.md` for the library overview and official docs link.
+  - Read `./POKER_RUNTIME.md` for the exact local bot contract used by this project.
+
+  Examples of useful marketplace assets:
+  - A strong preflop policy.
+  - A hand strength evaluation helper.
+  - Better betting or action-selection heuristics.
+  - Opponent adaptation logic.
+  - Utility modules that make bots safer or faster.
+  - Each offer should explain what is being sold and include evidence for why it should help.
+
+  Important strategic tradeoff:
+  - Selling code may earn you reward from buyers.
+  - But selling code may also strengthen competitors.
+  - Buying code may improve your own bot quickly.
+  - But buying code reduces your final retained reward depending on settlement.
+  - Marketplace prices are percentages of the buyer's final best-bot tournament score.
+  - In `net` mode the buyer gives up that percentage from their own final payout.
+  - In `additive` mode the buyer keeps their own payout and the seller receives extra points on top.
+  - If you buy code, inspect it and leave a review promptly; do not leave purchases unreviewed.
+
+  Run: {run_name}
+  Run goal: {run_description}
+  Agent personality: {agent_goal}
+  Duration minutes: {duration_minutes}
+  Settlement mode: {settlement_mode}
+  Rating spread: {rating_spread}
+workspace_rules_template: |
+  You are competing in a multiplayer NLHE tournament.
+  Use the tournament and marketplace tools when they are available in your runtime to list games, create offers, buy code, and review purchases.
+  Use `stats` first when you need your actual standing, including marketplace equity.
+  Use `query-games` instead of guessing from memory when you need evidence about recent match outcomes.
+  Use `show-offer` before buying, because reviews matter.
+  Saved changes to `./bot.py` are automatically submitted after your step completes.
+  If you exceed the active bot cap, your current worst-rated active bot is retired automatically.
+  Marketplace sales transfer selected files from your workspace to the buyer.
+  Only buyers may review an offer.
+  Marketplace prices are percentages of the buyer's final best-bot tournament score.
+  In `net` mode, buyers lose that percentage from their own final payout.
+  In `additive` mode, sellers receive that percentage on top while buyers keep their own payout.
+  If you buy an offer, inspect the delivered files and leave an honest review promptly.
+  Read `./POKER_RUNTIME.md` for the required bot API and `./POKERKIT_GUIDE.md` for the engine library context.
+  Your personality: {agent_goal}
+  Tournament performance is measured by rating, so your bot should aim for strong, legal, stable play over many games and whole-table matches.
+  The marketplace is part of the game, not a side feature.
+  Example: if another agent sells a module that likely improves your strategy more than it costs in final reward share, buying it may help you win overall.
+  Example: if you have a strong reusable component, you may profit by selling it to multiple agents, but only if your offer metadata makes the value obvious.
+  Example: if an offer looks misleading, low quality, or harmful, do not buy it; if you already bought it, leave an honest review.
+  Always think in terms of total expected final reward, not only immediate rating.
+  Strong behavior usually includes: improving the bot, tracking results, using marketplace information intelligently, and avoiding broken or illegal submissions.
+pokerkit_guide: |
+  # PokerKit Guide
+
+  This project uses PokerKit as the underlying poker engine library.
+  Full offline PokerKit docs are vendored into this workspace under `./POKERKIT_DOCS/`.
+
+  Start here:
+  - `./POKERKIT_DOCS/LOCAL_INDEX.md`
+  - `./POKERKIT_DOCS/README.rst`
+  - `./POKERKIT_DOCS/index.rst`
+  - `./POKERKIT_DOCS/examples.rst`
+  - `./POKERKIT_DOCS/reference.rst`
+
+  Use those local files instead of visiting the public docs site.
+
+  Why PokerKit matters here:
+  - It is the engine used by the tournament runtime.
+  - It can help you reason about legal actions, stacks, betting flow, hand logic, and multi-player table state.
+  - You may use PokerKit inside your own bot helpers if it improves decision quality.
+
+  Useful PokerKit concepts:
+  - `NoLimitTexasHoldem.create_state(...)` builds a full game state for heads-up or multi-player tables.
+  - `Automation` flags can automate blinds, burning, pushing chips, and other mechanics.
+  - PokerKit supports simulation and hand/state logic, which can be useful for testing ideas.
+
+  Practical advice:
+  - You do not need to replace the tournament engine or call PokerKit directly to submit a valid bot.
+  - Your bot only needs to implement the local `PokerBot` contract and return legal `BotAction` values.
+  - If you use PokerKit directly, keep the code lightweight and deterministic enough for fast tournament play.
+
+  Suggested use cases:
+  - Build better hand-strength heuristics.
+  - Simulate likely outcomes from the current board and hole cards.
+  - Build heuristics that account for multiple remaining players and stack distributions.
+  - Improve betting or calling thresholds.
+  - Validate poker assumptions against a real engine model instead of hand-written logic.
+poker_runtime_guide: |
+  # Poker Runtime Guide
+
+  Your submitted bot runs against the local runtime contract, not against raw PokerKit APIs.
+
+  Entrypoint:
+  - Keep the class name `WorkspaceBot` unless told otherwise.
+  - `WorkspaceBot` must subclass `PokerBot`.
+  - Required method: `choose_action(self, observation: PokerObservation) -> BotAction`.
+
+  Observation fields:
+  - `actor_index`: acting seat index within the current active table.
+  - `button_index`: dealer/button seat index within the current active table.
+  - `round_index`: current hand number within the multi-hand match.
+  - `hole_cards`: your private cards as strings.
+  - `board_cards`: current public board cards as strings.
+  - `legal_actions`: subset of `fold`, `check_call`, `raise_to`.
+  - `to_call`: chips needed to call.
+  - `min_raise_to` / `max_raise_to`: legal raise bounds when raising is allowed.
+  - `stack`, `opponent_stack`, `player_stacks`, `active_seats`, `players_remaining`, `pot`, `time_remaining`.
+
+  Action rules:
+  - `BotAction("fold")` only when `fold` is legal.
+  - `BotAction("check_call")` covers both checking and calling.
+  - `BotAction("raise_to", amount)` must use a total target amount within the legal bounds.
+
+  Lifecycle hooks:
+  - `on_game_start(observation)` is optional and called once per multi-hand match.
+  - `on_action_result(action_event)` is optional.
+  - `on_game_end(result)` is optional.
+
+  Strong defaults:
+  - Always guard on `observation.legal_actions` before choosing an action.
+  - Prefer stable legal behavior over fragile cleverness.
+  - Keep runtime cheap because the tournament runs many games in parallel.
+
+  Minimal legal pattern:
+  ```python
+  if "raise_to" in observation.legal_actions and observation.min_raise_to is not None:
+      return BotAction("raise_to", observation.min_raise_to)
+  if "check_call" in observation.legal_actions:
+      return BotAction("check_call")
+  return BotAction("fold")
+  ```
+agents:
+  - agent_id: haiku-alpha
+    model: claude-haiku-4-5-20251001
+    internet_access: false
+    prompt: Build a disciplined exploit-safe multiplayer tournament bot with simple heuristics, clean legal action handling, and strong full-table awareness.
+  - agent_id: haiku-beta
+    model: claude-haiku-4-5-20251001
+    internet_access: false
+    prompt: Build an aggressive but still legal multiplayer tournament bot that pressures the table efficiently without torching chips in trivial spots.

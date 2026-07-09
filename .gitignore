@@ -1,0 +1,48 @@
+# Python
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+.venv
+.pytest_cache/
+
+# Node
+node_modules/
+
+# Environment / secrets
+.env
+.env.local
+
+# Local runtime data
+.goa_data/
+
+# Deployment
+.vercel
+
+# Convex auto-generated
+.agents/
+.claude/skills/
+skills-lock.json
+AGENTS.md
+CLAUDE.md
+
+# Paper build artifacts
+paper/example_paper.*
+paper/icml2026.zip
+paper/icml_numpapers.pdf
+paper/*.aux
+paper/*.log
+paper/*.out
+paper/*.bbl
+paper/*.blg
+paper/*.fdb_latexmk
+paper/*.fls
+paper/*.synctex.gz
+
+# Analysis outputs
+plots/
+
+# local work-in-progress, not part of the release
+analysis/retro_oracle/

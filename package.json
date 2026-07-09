@@ -1,0 +1,12 @@
+{
+  "name": "game-of-agents-root",
+  "private": true,
+  "scripts": {
+    "convex:codegen": "convex codegen",
+    "convex:deploy": "convex deploy",
+    "dashboard:build": "npm --prefix dashboard run build"
+  },
+  "devDependencies": {
+    "convex": "^1.33.0"
+  }
+}

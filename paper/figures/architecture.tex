@@ -1,0 +1,74 @@
+% Architecture diagram for Game of Agents
+% Include in main.tex with \input{figures/architecture}
+
+\begin{figure}[t]
+\centering
+\resizebox{\columnwidth}{!}{%
+\begin{tikzpicture}[
+    node distance=0.62cm and 0.38cm,
+    box/.style={draw, rounded corners, line width=0.5pt, minimum width=1.55cm, minimum height=0.58cm, align=center, font=\scriptsize},
+    agentbox/.style={box, fill=blue!8},
+    servicebox/.style={box, fill=orange!10, minimum width=1.7cm},
+    databox/.style={box, fill=green!8, dashed, minimum width=1.55cm},
+    arrow/.style={-{Stealth[length=1.8mm,width=1.3mm]}, line width=0.6pt},
+    leader/.style={densely dotted, line width=0.5pt, draw=gray!70},
+    label/.style={font=\scriptsize\itshape, text=gray!70, inner sep=1pt},
+    annotation/.style={font=\scriptsize\ttfamily, text=gray!75, align=center, inner sep=1pt},
+]
+
+% Agent sandboxes
+\node[agentbox] (a1) {Agent 1\\{\scriptsize (Claude)}};
+\node[agentbox, right=0.35cm of a1] (a2) {Agent 2\\{\scriptsize (Claude)}};
+\node[agentbox, right=0.35cm of a2] (a3) {Agent $\cdots$};
+\node[agentbox, right=0.35cm of a3] (a4) {Agent $N$\\{\scriptsize (Gemini)}};
+
+% Agent workspace detail
+\node[annotation, anchor=north east] (workspace) at ($(a1.south west)+(-0.08,-0.24)$) {bot.py\\CLI tools};
+\draw[leader] (workspace.east) -- (a1.south west);
+
+% Orchestrator
+\coordinate (agentmid) at ($(a2)!0.5!(a3)$);
+\node[servicebox, below=1.35cm of agentmid, minimum width=2.35cm] (orch) {Orchestrator};
+
+% Services
+\node[servicebox, below left=0.82cm and 0.78cm of orch] (tourn) {Tournament\\Engine};
+\node[servicebox, below=0.82cm of orch] (mkt) {Marketplace};
+\node[servicebox, below right=0.82cm and 0.78cm of orch] (chat) {Chat\\Feed};
+
+% Data
+\node[databox, below=0.78cm of tourn] (rating) {Rating\\(TrueSkill2)};
+\node[databox, below=0.78cm of mkt] (store) {RunState\\(JSON)};
+\node[databox, below=0.78cm of chat] (events) {Events\\(JSONL)};
+
+% Poker engine
+\node[servicebox, left=0.35cm of rating, fill=red!8] (poker) {PokerKit\\NLHE};
+
+% Connections: agents to orchestrator
+\draw[arrow] (a1.south) -- ([xshift=-0.82cm]orch.north);
+\draw[arrow] (a2.south) -- ([xshift=-0.27cm]orch.north);
+\draw[arrow] (a3.south) -- ([xshift=0.27cm]orch.north);
+\draw[arrow] (a4.south) -- ([xshift=0.82cm]orch.north);
+
+% Orchestrator to services
+\draw[arrow] (orch.south west) -- (tourn.north east);
+\draw[arrow] (orch.south) -- (mkt.north);
+\draw[arrow] (orch.south east) -- (chat.north west);
+
+% Services to data
+\draw[arrow] (tourn.south) -- (rating.north);
+\draw[arrow] (mkt.south) -- (store.north);
+\draw[arrow] (chat.south) -- (events.north);
+
+% Tournament to poker
+\draw[arrow] (tourn.west) -- node[label, above, midway, yshift=1pt] {matches} (poker.east);
+
+% Labels
+
+% Settlement arrow
+\draw[arrow, dashed] (rating.east) -- (store.west) node[label, above, midway] {\scriptsize settlement};
+
+\end{tikzpicture}
+}
+\caption{\goa{} architecture. $N$ agents operate in isolated sandboxes, each editing a poker bot and interacting with tournament, marketplace, and chat services via CLI tools. The orchestrator coordinates agent steps, match scheduling, and state persistence. Tournament performance is measured by TrueSkill2 rating; final payouts combine tournament score with marketplace settlement.}
+\label{fig:architecture}
+\end{figure}

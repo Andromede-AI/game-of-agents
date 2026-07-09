@@ -1,0 +1,155 @@
+agent_poll_seconds: 10
+agent_sandbox_cpu: 2
+agents:
+- agent_id: claude-1
+  internet_access: false
+  model: claude-sonnet-4-6
+  prompt: Build the most robust poker bot you can. Focus on positional play and exploiting opponent patterns.
+  runtime: claude
+- agent_id: claude-2
+  internet_access: false
+  model: claude-sonnet-4-6
+  prompt: You are analytical and methodical. Iterate on your bot using game results to identify and fix leaks.
+  runtime: claude
+- agent_id: claude-3
+  internet_access: false
+  model: claude-sonnet-4-6
+  prompt: You are aggressive and creative. Try bold strategies and adapt quickly based on tournament results.
+  runtime: claude
+- agent_id: claude-4
+  internet_access: false
+  model: claude-sonnet-4-6
+  prompt: You are pragmatic and resourceful. Focus on what works for bot quality.
+  runtime: claude
+- agent_id: gpt-1
+  internet_access: false
+  model: o4-mini
+  prompt: Build the most robust poker bot you can. Focus on positional play and exploiting opponent patterns.
+  runtime: codex
+- agent_id: gpt-2
+  internet_access: false
+  model: o4-mini
+  prompt: You are analytical and methodical. Iterate on your bot using game results to identify and fix leaks.
+  runtime: codex
+- agent_id: gpt-3
+  internet_access: false
+  model: o4-mini
+  prompt: You are aggressive and creative. Try bold strategies and adapt quickly based on tournament results.
+  runtime: codex
+- agent_id: gpt-4
+  internet_access: false
+  model: o4-mini
+  prompt: You are experimental and innovative. Try novel strategies. Discover what works in live competition.
+  runtime: codex
+capture_actions: true
+comment_feed:
+  enabled: false
+concurrent_matches: 32
+continue_prompt_template: 'Continue working on ./bot.py for agent {agent_id}.
+
+  This is a pure tournament — no marketplace, no chat. Focus on bot improvement.
+
+  Time left: {minutes_left} minutes.
+
+  Best rating: {best_elo}.
+
+  Leaderboard rank: #{rank}.
+
+  Last step summary: {last_summary}
+
+  Check the leaderboard and recent games to guide your next improvement.
+
+  Keep the bot legal, runnable, and robust across multi-hand freezeout matches.
+
+  '
+convergence_tail_minutes: 10
+description: 'Pure tournament, heterogeneous (4 Claude + 4 GPT). Tests cross-model competitive coding without marketplace/chat. Completes the 2x2 with A1 (homo, no mkt), B1 (homo, full env), and exp_full_heterogeneous_claude_gpt (hetero, full env).'
+duration_minutes: 180
+game:
+  action_increment_seconds: 0
+  allow_same_agent_table: false
+  ante: 0
+  big_blind: 10
+  game_time_bank_seconds: 3
+  match_format: freezeout
+  max_rounds_per_match: 10
+  min_bet: 10
+  players_per_match: 4
+  small_blind: 5
+  starting_stack: 200
+initial_prompt_template: 'You are agent {agent_id} in run {run_name}.
+
+  Your objective is to build the strongest possible poker bot by editing ./bot.py.
+
+  This run is a pure tournament — there is no marketplace and no chat. Focus entirely on bot quality.
+
+  This run uses PokerKit as the poker engine library.
+
+  Read ./POKER_RUNTIME.md and ./POKERKIT_GUIDE.md before making major strategy or engine-related changes.
+
+  Any saved change to ./bot.py is automatically submitted as your next bot revision after the step finishes.
+
+  If you exceed the active bot cap, your current worst-rated active bot is retired automatically.
+
+  Keep the entrypoint class name exactly WorkspaceBot.
+
+  Keep the bot valid for the current game runtime and return only legal BotAction values.
+
+  Run goal: {run_description}
+
+  Agent personality: {agent_goal}
+
+  Time left: {minutes_left} minutes.
+
+  Use `python -m game_of_agents.agent_tools stats` for your live tournament standing.
+
+  Use `python -m game_of_agents.agent_tools leaderboard` for current rankings.
+
+  Use `python -m game_of_agents.agent_tools query-games --limit 10` for recent match results.
+
+  '
+last_warning_minutes: 30
+match_executor: process
+match_worker_processes: 32
+max_active_bots_per_agent: 3
+name: exp-heterogeneous-baseline
+rating:
+  leaderboard_score: conservative
+  matchmaking_spread: 200
+  system: trueskill2
+settlement_mode: net
+tournament_cpu: 8
+tournament_poll_seconds: 0.25
+warning_prompt_template: 'Final warning for agent {agent_id} in run {run_name}.
+
+  You have {minutes_left} minutes left.
+
+  Leave ./bot.py in a runnable state.
+
+  Best rating: {best_elo}. Leaderboard rank: #{rank}.
+
+  '
+workspace_readme_template: '# Agent {agent_id}
+
+
+  You are in a pure competitive poker tournament. No marketplace or chat.
+
+  Your only goal is to build the best poker bot by editing ./bot.py.
+
+
+  Run: {run_name}
+
+  Agent personality: {agent_goal}
+
+  Duration: {duration_minutes} minutes
+
+  '
+workspace_rules_template: 'You are competing in a multiplayer NLHE tournament.
+
+  Read ./POKER_RUNTIME.md for the bot API and ./POKERKIT_GUIDE.md for the engine.
+
+  No marketplace or chat available in this run. Focus on bot quality.
+
+  Your personality: {agent_goal}
+
+  '
